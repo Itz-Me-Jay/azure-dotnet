@@ -15,10 +15,10 @@ stages:
       - job: buildJob
         steps:
           - task: UseDotNet@2
-            displayName: 'Use .NET Core sdk 5.x'
+            displayName: 'Use .NET Core sdk 5.0.100'
             inputs:
               packageType: 'sdk'
-              version: '5.x.x'
+              version: '5.0.100'
               installationPath: $(Agent.ToolsDirectory)/dotnet
 
           - task: DotNetCoreCLI@2
