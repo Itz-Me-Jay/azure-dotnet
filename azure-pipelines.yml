@@ -14,12 +14,12 @@ stages:
     jobs:
       - job: buildJob
         steps:
-          - task: UseDotNet@2
-            displayName: 'Use .NET Core sdk 5.0.100'
+          - task: DotNetCoreCLI@2
+            displayName: Build
             inputs:
-              packageType: 'sdk'
-              version: '4.x'
-              installationPath: $(Agent.ToolsDirectory)/dotnet
+              command: build
+              projects: '**/*.csproj' #path of project
+              arguments: '--configuration $(buildConfiguration)'
 
           - task: DotNetCoreCLI@2
             displayName: Restore
