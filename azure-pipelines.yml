@@ -1,15 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-# Here’s a breakdown of the hierarchy:
-
-# stages:
-#  - stage:
-#    Jobs:
-#     Steps:
-#      - task:
-
 trigger:
 - main
 
@@ -22,10 +10,17 @@ variables:
   buildConfiguration: 'Release' # Define the build configuration
 
 stages:
-  - stage: restore
+  - stage: build
     jobs:
-      - job: restoreJob
+      - job: buildJob
         steps:
+          - task: UseDotNet@2
+            displayName: 'Use .NET Core sdk 5.x'
+            inputs:
+              packageType: 'sdk'
+              version: '5.x.x'
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+
           - task: DotNetCoreCLI@2
             displayName: Restore
             inputs:
