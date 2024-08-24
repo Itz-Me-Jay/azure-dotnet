@@ -18,7 +18,7 @@ stages:
             displayName: 'Use .NET Core sdk 5.0.100'
             inputs:
               packageType: 'sdk'
-              version: '5.0.100'
+              version: '8.0.0-preview'
               installationPath: $(Agent.ToolsDirectory)/dotnet
 
           - task: DotNetCoreCLI@2
