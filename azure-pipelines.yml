@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  vmImage: Azure Pipelines
+  vmImage: host-jay
 
 steps:
 - script: echo Hello, world!
