@@ -18,23 +18,26 @@ pool:
   demands:
     - Agent.Name -equals host-agent
 
+variables:
+  buildConfiguration: 'Release' # Define the build configuration
+
 stages:
   - stage: restore
     jobs:
       - job: restoreJob
         steps:
-          - task: DotNetCoreCLi@1
+          - task: DotNetCoreCLI@2
             displayName: Restore
             inputs:
               command: 'restore'
               feedsToUse: 'select'
-              vstsfeed: 'my-vsts-feed'
+              vstsFeed: 'my-vsts-feed'
           
           - task: DotNetCoreCLI@2
             displayName: Build
             inputs:
               command: build
-              projects: '**/*.csproj' #path of project
+              projects: '**/*.csproj' # Path of project
               arguments: '--configuration $(buildConfiguration)'
 
           - task: DotNetCoreCLI@2
@@ -45,7 +48,7 @@ stages:
               arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
               zipAfterPublish: True
               
-          - task: PublishPipelineArtifact@0
+          - task: PublishPipelineArtifact@1
             displayName: Upload
             inputs:
               targetPath: '$(Build.ArtifactStagingDirectory)'
