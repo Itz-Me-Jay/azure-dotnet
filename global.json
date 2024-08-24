@@ -1,5 +1,7 @@
 {
   "sdk": {
-    "version": "5.0.100"  // Specify the SDK version you want to use
+    "version": "8.0.0-preview",
+    "rollForward": "latestFeature",
+    "allowPrerelease": true
   }
 }
