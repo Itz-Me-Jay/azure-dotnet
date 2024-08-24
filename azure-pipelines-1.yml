@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  vmImage: jayasurya-pool
+  vmImage: host-jay
 
 steps:
 - script: echo Hello, world!
