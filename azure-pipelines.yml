@@ -7,8 +7,9 @@ trigger:
 - main
 
 pool:
-  vmImage: host-jay
-
+  name: host-jay
+  demands:
+    - Agent.Name -equals host-agent
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
