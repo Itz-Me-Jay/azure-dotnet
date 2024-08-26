@@ -1,0 +1,351 @@
+# Resources section: Defines external resources used in the pipeline
+resources:
+  # Repositories to be used in the pipeline
+  repositories:
+  - repository: csit-cdax # Name of the repository
+    type: githubenterprise # Type of repository (GitHub Enterprise in this case)
+    name: csit-cdax/Templates # Full path to the repository
+    ref: main # Branch or tag to use (main branch in this case)
+    endpoint: cdax-ghe # Service connection to access the repository # https://www.youtube.com/watch?v=pSmKNbN_Y4s 
+    ## A service endpoint is essentially a secure connection between your Azure DevOps pipeline and an external service.
+  ## It's used to access resources from that service, such as code repositories, artifact feeds, or cloud platforms.
+  ## In your specific case, you need a service endpoint to access a GitHub Enterprise instance.
+
+  trigger: # Trigger for the pipeline
+  branches: # Branches to trigger the pipeline on
+    include:
+    - main # Trigger on the main branch
+    - dev* # Trigger on branches starting with 'dev'
+    - feature/* # Trigger on branches starting with 'feature'
+  tags: # Tags to trigger the pipeline on
+    include:
+    - 'release-*' # Trigger on tags starting with 'release-'
+    - 'pre-release-*' # Trigger on tags starting with 'pre-release-'
+  paths: # Paths to include or exclude for triggering
+    exclude:
+    - Hpi.Css.Crm.CaseManagement.yml # Exclude this file from triggering
+    - .gitignore # Exclude .gitignore file
+    - nuget.config # Exclude nuget.config file
+
+# Explanation:
+# trigger: Defines the conditions under which the pipeline will automatically run.
+# branches: Specifies the branches that will trigger the pipeline.
+# include: Lists the branches to include for triggering.
+# tags: Specifies the tags that will trigger the pipeline.
+# include: Lists the tags to include for triggering.
+# paths: Specifies the paths to include or exclude for triggering.
+# exclude: Lists the paths to exclude from triggering.
+
+pr: # Pull request trigger
+  autoCancel: true # Automatically cancel previous runs for the same pull request
+  branches: # Branches to trigger the pipeline on pull requests
+    include:
+    - main # Trigger on pull requests to the main branch
+    - dev* # Trigger on pull requests to branches starting with 'dev'
+  paths: # Paths to include or exclude for triggering on pull requests
+    exclude:
+    - Hpi.Css.Crm.CaseManagement.yml # Exclude this file from triggering on pull requests
+    - .gitignore # Exclude .gitignore file
+    - nuget.config # Exclude nuget.config file
+
+  name: $(BuildDefinitionName)_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r) # example - MyBuild_2024.08.08.01
+  # name: Defines the name of the pipeline run.
+#       These are built-in variables that provide information about the build. 
+#       They are used to create a unique and informative name for each pipeline run. 
+
+# Explanation:
+# pr: Defines the behavior of the pipeline when triggered by a pull request.
+# autoCancel: Specifies whether to automatically cancel previous runs for the same pull request.
+# branches: Defines the branches that can trigger the pipeline when a pull request is opened.
+# paths: Specifies the paths to include or exclude for triggering on pull requests.
+# This block configures how the pipeline responds to pull requests
+
+# Automatic cancellation: The autoCancel property, when set to true, ensures that any previous pipeline runs for the same pull request are canceled 
+# when new changes are pushed to the pull request. This prevents unnecessary resource consumption and outdated builds.
+# Branch restrictions: You can specify which branches should trigger the pipeline when a pull request is created against them. 
+# This helps in controlling which pull requests initiate the pipeline.   
+# Path filters: Similar to the paths section under trigger, you can specify which files or folders should trigger the pipeline when changes are made in a pull request.
+
+# Explanation:
+# Common types of variables:
+# These variables store values that can be referenced in other parts of the YAML file.
+# Built-in variables: These are predefined variables provided by Azure DevOps, such as Build.SourceBranch, Build.DefinitionName, etc.
+# Environment variables: These variables are defined at the environment level and can be accessed within the pipeline.
+# Custom variables: These are user-defined variables that can be created within the pipeline YAML file.
+
+# Understanding the Variables
+
+# The variables block is crucial for defining values that can be used throughout your pipeline. Let's break down some of the variables you've defined:
+# Core Variables
+# isMain, isDevCurrent, isDevNext, isTag, isPreTag, isPR: These boolean variables seem to determine the branch or tag context of the pipeline run. 
+# They are likely used to control the execution of different stages or jobs based on the current branch or tag.
+# buildProjects, buildConfiguration: These variables specify the projects to build and the build configuration to use.
+# sonarProjectName: This variable likely defines the project name for SonarQube analysis.
+# sonarScan, veracodeScan: These boolean variables indicate whether to perform SonarQube or Veracode scans.
+# appSettings: This variable contains a list of application settings in key-value pairs. These settings are likely passed to the deployed application.
+
+# Potential Variable Groups and Other Considerations
+# group: CommonVariables: This line suggests the use of a variable group named CommonVariables. 
+# Variable groups allow you to store and manage variables centrally and reuse them across multiple pipelines.
+# Other variables: There are many other variables defined, such as those related to environment-specific settings 
+# (e.g., CaseManagement - Dev1, CaseManagement - Dev2, etc.). These variables likely contain configuration values for different environments.
+
+# How These Variables Are Used
+# These core variables are typically used in conjunction with conditional logic and stages to control the pipeline's behavior. For example:
+# The isMain variable might be used to deploy to a production environment only when the pipeline runs on the main branch.
+# The buildProjects and buildConfiguration variables are often passed to build tasks to specify which projects to build and in what configuration.
+# The sonarScan and veracodeScan variables are used to conditionally execute code quality analysis tasks.
+# The appSettings variable is passed to deployment tasks to configure the deployed application.
+
+
+variables:
+# - name: semVerMajorMinor
+#   value: '1.0'
+- name: isMain
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+- name: isDevCurrent
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/dev-current')]
+- name: isDevNext
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/dev-next')]
+- name: isTag
+  value: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/release-')]
+- name: isPreTag
+  value: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/pre-release-')]
+- name: isPR
+  value: $[eq(variables['Build.Reason'], 'PullRequest')]
+- name: buildProjects
+  value: '**/Hpi.Css.Crm.CaseManagement.csproj'
+- name: buildConfiguration
+  value: 'Release'
+- name: sonarProjectName
+  value: CDAX-CaseManagementAPI_Hpi.Css.Crm.CaseManagement
+#   value: 'cdax-nuget'
+
+# Scan Settings
+- name: sonarScan
+  # - name: nugetSnapshotServiceConnection
+  # - name: nugetReleasesServiceConnection
+  #   value: 'cdax-nuget-snapshots'
+  value: false
+- name: veracodeScan
+  value: false
+
+# Agent Settings
+# - name: pool
+#   value: 'codeway-aws-linux2023'
+
+# App Settings
+- name: appSettings
+  value: '-CrmUrl $(CrmUrl) 
+  -ByPassPluginExecution $(ByPassPluginExecution) 
+  -LastXDays $(LastXDays) 
+  -CaseMgntAzureSB__fullyQualifiedNamespace $(CaseMgntAzureSB__fullyQualifiedNamespace) 
+  -MethoneQueue $(MethoneQueue) 
+  -OSApi_Timeout $(OSApi_Timeout) 
+  -CaseContainer $(CaseContainer) 
+  -CaseContainerBak $(CaseContainerBak) 
+  -CaseQueue $(CaseQueue) 
+  -CrmEEGPassword $(CrmEEGPassword)
+  -CrmEEGUser $(CrmEEGUser) 
+  -EEGDashboardPassword $(EEGDashboardPassword) 
+  -EEGDashboardURL $(EEGDashboardURL) 
+  -EEGDashboardUser $(EEGDashboardUser) 
+  -EEGWrapperAPI $(EEGWrapperAPI) 
+  -ErrorQueue $(ErrorQueue) 
+  -HttpSizeThresholdinByte $(HttpSizeThresholdinByte) 
+  -HttpSizeThresholdinByteCase $(HttpSizeThresholdinByteCase) 
+  -HttpSizeThresholdinByteFile $(HttpSizeThresholdinByteFile) 
+  -MethoneContainer $(MethoneContainer) 
+  -MethoneContainerBak $(MethoneContainerBak) 
+  -CaseMgntStorage $(CaseMgntStorage) 
+  -NonFedralUserId $(NonFedralUserId) 
+  -NoOfThreads $(NoOfThreads) 
+  -TibcoAzureSB__fullyQualifiedNamespace $(TibcoAzureSB__fullyQualifiedNamespace) 
+  -TibcoQueue $(TibcoQueue) 
+  -HttpClientTimeout $(HttpClientTimeout) 
+  -RetryCountNo $(RetryCountNo) 
+  -BatchSize $(BatchSize) 
+  -ApolloIntegration $(ApolloIntegration) 
+  -ApolloUserClientId $(ApolloUserClientId) 
+  -ApolloUserPassword $(ApolloUserPassword) 
+  -timeoutinmilliSec $(timeoutinmilliSec) 
+  -UIDAccessTokenURL $(UIDAccessTokenURL) 
+  -User-Agent $(User-Agent) 
+  -WEBSITE_LOAD_CERTIFICATES $(WEBSITE_LOAD_CERTIFICATES) 
+  -TimeIntervalFor1stRetry $(TimeIntervalFor1stRetry) 
+  -TimeIntervalFor2ndRetry $(TimeIntervalFor2ndRetry) 
+  -TimeIntervalFor3rdRetry $(TimeIntervalFor3rdRetry) 
+  -CaseMgntV2AzureSBQ $(CaseMgntV2AzureSBQ) 
+  -CaseApiV2Queue $(CaseApiV2Queue) 
+  -MOApiQueue $(MOApiQueue) 
+  -CaseApiV2Container $(CaseApiV2Container) '
+- group: CommonVariables
+
+# - template: lib/semantic-version-v0.yaml@codeway
+#   parameters:
+#     versionOverride: ''
+#     # versionMajorMinor: ${{ variables.semVerMajorMinor }}
+#     versionMajorMinor: '1.0'
+#     versionPatch: ''
+#     versionLabel: ''
+#     versionSeed: 0
+#     addVPrefix: false
+
+# Each stages as multiple jobs and each job as multiple steps 
+stages:
+- stage: build
+  jobs:
+  - template: csit-win-dotnet-service-v1-alpha.yml@csit-cdax
+    parameters:
+      pool: $(DefaultWindowsAgentPool_1)
+      isDotNetCore: true
+      sharedProjectRepoName: 'CommonCodeV2'
+      # sharedProjectRepoBranch: ${{ variables.branch }}
+
+      buildProjects: $(buildProjects)
+      buildConfiguration: '$(buildConfiguration)'
+
+      # nuget
+      feedsToUse: 'select'
+      nugetConfigPath: ''
+      nugetServiceConnection: ''
+
+      # SonarQube
+      sonarScan: ${{ variables.sonarScan }}
+      sonarProjectPrefix: 'cdax'
+      sonarProjectName: $(sonarProjectName)
+      sonarServiceConnection: 'cdax-sonarqube'
+
+      # Veracode
+      veracodeScan: ${{ variables.veracodeScan }}
+      veracodeServiceConnection: 'cdax-veracode'
+      veracodeAppProfile: 'Customer Care Dynamics (CDAX)'
+      sandboxName: 'AzureDevOpsSandbox'
+      versionNo: 'SyncCaseCreationAPI-$(build.buildNumber)'
+
+- stage: dev1
+  displayName: Deploy to Dev1 Environment
+  condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.isPR, 'false'), eq(variables.isDevNext, 'true'))
+
+  variables:
+  - group: CaseManagement - Dev1
+
+  jobs:
+  - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax
+    parameters:
+      pool: $(DefaultWindowsAgentPool_1)
+      environment: 'CaseManagement - Dev1'
+      azureServiceConnection: 'cdax-sa-azure-dev'
+      functionAppName: 'func-casemgmt-dev1-eus2-01'
+      artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+      appSettings: $(appSettings)
+      deploymentMethod: 'auto'
+
+- stage: dev2
+  displayName: Deploy to Dev2 Environment
+  condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.isPR, 'false'), eq(variables.isDevCurrent, 'true'))
+
+  variables:
+  - group: CaseManagement - Dev2
+
+  jobs:
+  - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax
+    parameters:
+      pool: $(DefaultWindowsAgentPool_1)
+      environment: 'CaseManagement - Dev2'
+      azureServiceConnection: 'cdax-sa-azure-dev'
+      functionAppName: 'func-casemgmt-dev2-eus2-01'
+      artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+      appSettings: $(appSettings)
+      deploymentMethod: 'auto'
+
+- stage: tst1
+  displayName: Deploy to Test1 Environment
+  condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.isPR, 'false'), eq(variables.isDevNext, 'true'))
+
+  variables:
+  - group: CaseManagement - Tst1
+
+  jobs:
+  - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax
+    parameters:
+      pool: $(DefaultWindowsAgentPool_1)
+      environment: 'CaseManagement - Tst1'
+      azureServiceConnection: 'cdax-sa-azure-tst'
+      functionAppName: 'func-casemgmt-tst1-eus2-01'
+      artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+      appSettings: $(appSettings)
+      deploymentMethod: 'auto'
+
+- stage: can
+  displayName: Deploy to Canary Environment
+  condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.isPR, 'false'), eq(variables.isDevCurrent, 'true'))
+
+  variables:
+  - group: CaseManagement - Can
+
+  jobs:
+  # - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax
+  #   parameters:
+  #     pool: $(DefaultWindowsAgentPool_1)
+  #     environment: 'CaseManagement - Can'
+  #     azureServiceConnection: 'cdax-sa-azure-can'
+  #     functionAppName: 'func-casemgmt-can-eus2-01'
+  #     artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+  #     appSettings: $(appSettings)
+  #     deploymentMethod: 'auto'
+
+  - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax{}
+    parameters:
+      pool: $(DefaultWindowsAgentPool_1)
+      environment: 'CaseManagement - Can'
+      azureServiceConnection: 'cdax-sa-azure-can'
+      functionAppName: 'func-casemgmt-can-eus2-01'
+      artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+      appSettings: $(appSettings)
+      deploymentMethod: 'auto'
+
+- stage: trn
+  displayName: Deploy to Training Environment
+  condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.isPR, 'false'), eq(variables.isMain, 'true'))
+
+  variables:
+  - group: CaseManagement - Trn
+
+  jobs:
+  - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax
+    parameters:
+      pool: $(DefaultWindowsAgentPool_1)
+      environment: 'CaseManagement - Trn'
+      azureServiceConnection: 'cdax-sa-azure-trn'
+      functionAppName: 'func-casemgmt-trn-eus2-01'
+      artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+      appSettings: $(appSettings)
+      deploymentMethod: 'auto'
+
+- stage: pro
+  displayName: Deploy to Production Environment
+  condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.isPR, 'false'), eq(variables.isMain, 'true'))
+  variables:
+  - group: CaseManagement - Pro
+
+  jobs:
+  # - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax
+  #   parameters:
+  #     pool: $(DefaultWindowsAgentPool_1)
+  #     environment: 'CaseManagement - Pro'
+  #     azureServiceConnection: 'cdax-azure-prod'
+  #     functionAppName: 'func-methone-prod-wus-001'
+  #     artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+  #     appSettings: $(appSettings)
+  #     deploymentMethod: 'auto'
+
+  - template: csit-win-dotnet-function-app-release-v0-alpha.yml@csit-cdax
+    parameters:
+      pool: $(DefaultWindowsAgentPool_1)
+      environment: 'CaseManagement - Pro'
+      azureServiceConnection: 'cdax-sa-azure-pro'
+      functionAppName: 'func-casemgmt-pro-wus-01'
+      artifactName: '$(Pipeline.Workspace)/drop/drop.zip'
+      appSettings: $(appSettings)
+      deploymentMethod: 'auto'
